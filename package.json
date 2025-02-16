@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "build": "node build",
-    "vercel-build": "npm run build && cp -r documentation/* public/",
+    "vercel-build": "npm run build && mkdir -p public && cp -r index.html documentation lib public/",
     "deploy": "vercel"
   },
   "bugs": {
