@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZunAI - Your AI Fashion Assistant</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "@react-three/fiber": "https://unpkg.com/@react-three/fiber@8.15.12/dist/react-three-fiber.cjs.production.min.js",
+                "@react-three/drei": "https://unpkg.com/@react-three/drei@9.92.7/dist/react-three-drei.cjs.production.min.js"
+            }
+        }
+    </script>
+    <script type="module" src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script type="module" src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <style>
+        :root {
+            --primary: #D4AF37;
+            --secondary: #C5A572;
+            --dark: #0A0A0A;
+            --light: #FFFFFF;
+            --gold-gradient: linear-gradient(135deg, #D4AF37, #C5A572);
+            --dark-gradient: linear-gradient(135deg, #0A0A0A, #1A1A1A);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: var(--dark-gradient);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--light);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0.8;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gold-gradient);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            opacity: 1;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .container {
+            width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 80px 2rem 2rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            z-index: 1;
+            padding: 0 1rem;
+        }
+
+        .logo {
+            font-family: 'Didot', serif;
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0;
+        }
+
+        .tagline {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+            opacity: 0;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        .floating-element {
+            position: absolute;
+            background: var(--gold-gradient);
+            border-radius: 50%;
+            opacity: 0.03;
+            filter: blur(3px);
+        }
+
+        .prompt-container {
+            position: relative;
+            max-width: 1200px;
+            width: 95%;
+            margin: 0 auto;
+            opacity: 0;
+        }
+
+        .prompt-wrapper {
+            background: rgba(10, 10, 10, 0.8);
+            border-radius: 24px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .prompt-input-container {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .prompt-input {
+            flex: 1;
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 1.2rem 2rem;
+            border-radius: 12px;
+            color: var(--light);
+            font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            background: rgba(10, 10, 10, 1);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .prompt-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .prompt-button {
+            background: var(--gold-gradient);
+            border: none;
+            padding: 1.2rem 2.5rem;
+            border-radius: 12px;
+            color: var(--dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prompt-button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+        }
+
+        .prompt-button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .prompt-button.loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .prompt-button.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 2px solid transparent;
+            border-top-color: var(--dark);
+            border-radius: 50%;
+            animation: buttonLoader 0.8s linear infinite;
+        }
+
+        @keyframes buttonLoader {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .suggestions {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .suggestion {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .suggestion:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .suggestion:active {
+            transform: translateY(0);
+        }
+
+        .suggestion::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(212, 175, 55, 0.2);
+            transform: translate(-50%, -50%) scale(0);
+            border-radius: inherit;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .suggestion:hover::before {
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0;
+        }
+
+        .testimonials {
+            padding: 120px 2rem;
+            background: var(--dark-gradient);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .testimonials-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 4rem;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            opacity: 0;
+        }
+
+        .testimonial-card {
+            background: rgba(10, 10, 10, 0.8);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(212, 175, 55, 0.4);
+            box-shadow: 0 8px 32px rgba(212, 175, 55, 0.1);
+        }
+
+        .testimonial-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 1.5rem;
+        }
+
+        .testimonial-author {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .testimonials {
+                padding: 80px 1rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+                margin-bottom: 3rem;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-separator {
+            width: 120px;
+            height: 2px;
+            background: var(--gold-gradient);
+            margin: 0 auto;
+            opacity: 0.5;
+            position: relative;
+        }
+
+        .section-separator::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: var(--gold-gradient);
+            border-radius: 50%;
+        }
+
+        .features {
+            padding: 120px 2rem;
+            background: var(--dark-gradient);
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features-title {
+            font-size: 4rem;
+            line-height: 1.2;
+            margin-bottom: 6rem;
+            color: var(--light);
+            opacity: 0;
+            transform: translateY(20px);
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 800px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4rem 2rem;
+            opacity: 0;
+            margin: 0 auto;
+            max-width: 1000px;
+        }
+
+        .feature-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(30, 30, 30, 0.5);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .feature-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: translateY(-5px);
+            background: rgba(40, 40, 40, 0.6);
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            color: var(--light);
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+        }
+
+        @media (max-width: 1024px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .features {
+                padding: 80px 1rem;
+            }
+
+            .features-title {
+                font-size: 2.5rem;
+                margin-bottom: 4rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .feature-card h3 {
+                font-size: 1.25rem;
+            }
+        }
+
+        .try-on-results {
+            padding: 120px 2rem;
+            background: var(--dark-gradient);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .try-on-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .try-on-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 4rem;
+            opacity: 0;
+        }
+
+        .try-on-column {
+            text-align: center;
+        }
+
+        .try-on-column h3 {
+            font-size: 1.2rem;
+            color: var(--light);
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .try-on-image {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .try-on-image:hover {
+            transform: scale(1.02);
+        }
+
+        @media (max-width: 1024px) {
+            .try-on-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .try-on-results {
+                padding: 80px 1rem;
+            }
+
+            .try-on-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Avatar Showcase Section */
+        .avatar-showcase {
+            padding: 120px 2rem;
+            background: var(--dark-gradient);
+            position: relative;
+            overflow: hidden;
+            min-height: 600px;
+        }
+
+        .avatar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .avatar-content {
+            z-index: 1;
+        }
+
+        .avatar-title {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .avatar-description {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 3rem;
+        }
+
+        .avatar-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .avatar-feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .avatar-feature-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gold-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .avatar-feature-icon svg {
+            width: 24px;
+            height: 24px;
+            color: var(--dark);
+        }
+
+        .avatar-feature-content h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--light);
+        }
+
+        .avatar-feature-content p {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.4;
+        }
+
+        .avatar-canvas {
+            position: relative;
+            width: 100%;
+            height: 700px;
+            background: transparent;
+            overflow: visible;
+        }
+
+        .avatar-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1;
+        }
+
+        .avatar-loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(212, 175, 55, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .avatar-loading-text {
+            color: var(--light);
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 1024px) {
+            .avatar-container {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .avatar-title {
+                font-size: 2.5rem;
+            }
+
+            .avatar-canvas {
+                height: 600px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .avatar-showcase {
+                padding: 80px 1rem;
+            }
+
+            .avatar-features {
+                grid-template-columns: 1fr;
+            }
+
+            .avatar-title {
+                font-size: 2rem;
+            }
+
+            .avatar-description {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-container">
+        <nav>
+            <a href="/" class="nav-brand">ZunAI</a>
+            <div class="nav-links">
+                <a href="/try-on" class="nav-link">Virtual Try-On</a>
+                <a href="/stylist" class="nav-link">AI Personal Stylist</a>
+                <a href="/shopping" class="nav-link">AI Shopping Assistant</a>
+                <a href="/wardrobe" class="nav-link">Wardrobe Organization</a>
+                <a href="/community" class="nav-link">Our Community</a>
+                <a href="/pricing" class="nav-link">Pricing Plans</a>
+            </div>
+        </nav>
+    </div>
+
+    <div class="container">
+        <section class="hero">
+            <div class="content">
+                <h1 class="logo">ZunAI</h1>
+                <h2 class="tagline">Your Personal AI Fashion Assistant</h2>
+                <div class="prompt-container">
+                    <div class="prompt-wrapper">
+                        <div class="prompt-input-container">
+                            <input type="text" class="prompt-input" placeholder="Ask anything about fashion, styling, or trends...">
+                            <button class="prompt-button">Ask ZunAI</button>
+                        </div>
+                        <div class="suggestions">
+                            <div class="suggestion">"What should I wear to a summer wedding?"</div>
+                            <div class="suggestion">"Create a capsule wardrobe for me"</div>
+                            <div class="suggestion">"How can I style a white shirt?"</div>
+                            <div class="suggestion">"Recommend sustainable fashion brands"</div>
+                            <div class="suggestion">"Match shoes with my outfit"</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="floating-elements" id="floating-elements"></div>
+        </section>
+
+        <div class="section-separator"></div>
+
+        <section class="avatar-showcase">
+            <div class="avatar-container">
+                <div class="avatar-content">
+                    <h2 class="avatar-title">Create Your Digital Twin</h2>
+                    <p class="avatar-description">Transform yourself into a stunning 3D avatar in seconds. Experience personalized fashion recommendations on your digital twin before making real-world decisions.</p>
+                    <div class="avatar-features">
+                        <div class="avatar-feature">
+                            <div class="avatar-feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" fill="currentColor"/>
+                                    <path d="M20 4H4C2.89543 4 2 4.89543 2 6V18C2 19.1046 2.89543 20 4 20H20C21.1046 20 22 19.1046 22 18V6C22 4.89543 21.1046 4 20 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="avatar-feature-content">
+                                <h4>Instant Creation</h4>
+                                <p>Create your personalized avatar in under 60 seconds using our AI technology.</p>
+                            </div>
+                        </div>
+                        <div class="avatar-feature">
+                            <div class="avatar-feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div class="avatar-feature-content">
+                                <h4>High Accuracy</h4>
+                                <p>Advanced AI ensures your avatar looks and moves just like you.</p>
+                            </div>
+                        </div>
+                        <div class="avatar-feature">
+                            <div class="avatar-feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21 4H3C1.89543 4 1 4.89543 1 6V18C1 19.1046 1.89543 20 3 20H21C22.1046 20 23 19.1046 23 18V6C23 4.89543 22.1046 4 21 4Z" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M7 8L17 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M7 12L17 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M7 16L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div class="avatar-feature-content">
+                                <h4>Customizable</h4>
+                                <p>Fine-tune your avatar's appearance with detailed customization options.</p>
+                            </div>
+                        </div>
+                        <div class="avatar-feature">
+                            <div class="avatar-feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" fill="currentColor"/>
+                                    <path d="M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.258 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.0113 9.77251C4.28059 9.5799 4.48572 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.33568 4.58054 7.63502 4.73519 7.95941 4.794C8.28381 4.85282 8.61838 4.81312 8.92 4.68H9C9.29577 4.55324 9.54802 4.34276 9.72569 4.07447C9.90337 3.80618 9.99872 3.49179 10 3.17V3C10 2.46957 10.2107 1.96086 10.5858 1.58579C10.9609 1.21071 11.4696 1 12 1C12.5304 1 13.0391 1.21071 13.4142 1.58579C13.7893 1.96086 14 2.46957 14 3V3.09C14.0013 3.41179 14.0966 3.72618 14.2743 3.99447C14.452 4.26276 14.7042 4.47324 15 4.6C15.3016 4.73312 15.6362 4.77282 15.9606 4.714C16.285 4.65519 16.5843 4.50054 16.82 4.27L16.88 4.21C17.0657 4.02405 17.2863 3.87653 17.5291 3.77588C17.7719 3.67523 18.0322 3.62343 18.295 3.62343C18.5578 3.62343 18.8181 3.67523 19.0609 3.77588C19.3037 3.87653 19.5243 4.02405 19.71 4.21C19.896 4.39575 20.0435 4.61632 20.1441 4.85912C20.2448 5.10192 20.2966 5.36217 20.2966 5.625C20.2966 5.88783 20.2448 6.14808 20.1441 6.39088C20.0435 6.63368 19.896 6.85425 19.71 7.04L19.65 7.1C19.4195 7.33568 19.2648 7.63502 19.206 7.95941C19.1472 8.28381 19.1869 8.61838 19.32 8.92V9C19.4468 9.29577 19.6572 9.54802 19.9255 9.72569C20.1938 9.90337 20.5082 9.99872 20.83 10H21C21.5304 10 22.0391 10.2107 22.4142 10.5858C22.7893 10.9609 23 11.4696 23 12C23 12.5304 22.7893 13.0391 22.4142 13.4142C22.0391 13.7893 21.5304 14 21 14H20.91C20.5882 14.0013 20.2738 14.0966 20.0055 14.2743C19.7372 14.452 19.5268 14.7042 19.4 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="avatar-feature-content">
+                                <h4>Real-time Updates</h4>
+                                <p>See changes instantly as you try different styles and outfits.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="avatar-canvas" id="avatar-canvas"></div>
+            </div>
+        </section>
+
+        <div class="section-separator"></div>
+
+        <section class="features">
+            <div class="features-container">
+                <h2 class="features-title">A superhuman fashion assistant</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3>Instant & intuitive</h3>
+                        <p>Real-time style recommendations with instant outfit visualization. Smart wardrobe management with one-click organization and instant fashion advice.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                                <path d="M8 14C8 14 9.5 16 12 16C14.5 16 16 14 16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M9 9H9.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M15 9H15.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <h3>Beautiful design</h3>
+                        <p>Stunning outfit visualizations and elegant UI that makes fashion exploration a joy. Every recommendation is presented with style and sophistication.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M15 3H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7L15 3Z" stroke="currentColor" stroke-width="2"/>
+                                <path d="M15 3V7H19" stroke="currentColor" stroke-width="2"/>
+                                <path d="M9 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M9 13H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M9 9H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <h3>Select & edit</h3>
+                        <p>Fine-tune your style preferences with precision. Click on any item to adjust colors, patterns, or styling details to match your taste perfectly.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-separator"></div>
+
+        <section class="try-on-results">
+            <div class="try-on-container">
+                <h2 class="section-title">Virtual Try-On Results</h2>
+                <div class="try-on-grid">
+                    <div class="try-on-column">
+                        <h3>Person</h3>
+                        <img src="person1.jpg" alt="Original person image" class="try-on-image">
+                    </div>
+                    <div class="try-on-column">
+                        <h3>Garment</h3>
+                        <img src="garment1.jpg" alt="Selected garment" class="try-on-image">
+                    </div>
+                    <div class="try-on-column">
+                        <h3>Try-on</h3>
+                        <img src="result1.jpg" alt="Virtual try-on result" class="try-on-image">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-separator"></div>
+
+        <section class="testimonials">
+            <div class="testimonials-container">
+                <h2 class="section-title">Loved by thousands of fashion enthusiasts</h2>
+                <div class="testimonials-grid">
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            "I absolutely LOVE ZunAI! It is the single best thing that I experienced. The fashion recommendations are just over the top mind-blowing as it basically enhances my style in an instant."
+                        </div>
+                        <div class="testimonial-author">Thomas</div>
+                    </div>
+
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            "ZunAI empowers me to create outfits that surpass my own styling abilities. It allows me to swiftly develop my personal style, without the need for expensive stylists or starting from scratch. Essentially, it enables me to concentrate on my confidence while the AI efficiently generates functional and visually appealing looks I love."
+                        </div>
+                        <div class="testimonial-author">Marius - Fashion Blogger</div>
+                    </div>
+
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            "Of all the fashion apps that I've tried, ZunAI was the one that was legit & true to its word with no fuss around, shady subscription and/or hidden fees, which I really really like and I totally understand you guys are an alpha and the apps are simple but it's light years ahead in my opinion and experience!"
+                        </div>
+                        <div class="testimonial-author">Patrick S.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Create floating elements
+        const floatingContainer = document.getElementById('floating-elements');
+        for (let i = 0; i < 20; i++) {
+            const element = document.createElement('div');
+            element.className = 'floating-element';
+            const size = Math.random() * 200 + 50;
+            element.style.width = size + 'px';
+            element.style.height = size + 'px';
+            element.style.left = Math.random() * 100 + '%';
+            element.style.top = Math.random() * 100 + '%';
+            floatingContainer.appendChild(element);
+        }
+
+        // Animate elements with wider range
+        anime({
+            targets: '.floating-element',
+            translateX: function() {
+                return anime.random(-300, 300);
+            },
+            translateY: function() {
+                return anime.random(-300, 300);
+            },
+            scale: function() {
+                return anime.random(0.2, 2.5);
+            },
+            easing: 'easeInOutBack',
+            duration: function() {
+                return anime.random(4000, 7000);
+            },
+            delay: function() {
+                return anime.random(0, 2000);
+            },
+            loop: true,
+            direction: 'alternate'
+        });
+
+        // Animate elements
+        anime({
+            targets: '.logo',
+            opacity: [0, 1],
+            translateY: [-50, 0],
+            easing: 'easeOutExpo',
+            duration: 1200,
+            delay: 300
+        });
+
+        anime({
+            targets: '.tagline',
+            opacity: [0, 1],
+            translateY: [-30, 0],
+            easing: 'easeOutExpo',
+            duration: 1200,
+            delay: 500
+        });
+
+        // Add navigation animation
+        anime({
+            targets: '.nav-link',
+            opacity: [0, 0.8],
+            translateY: [-20, 0],
+            delay: anime.stagger(100, {start: 200}),
+            easing: 'easeOutExpo',
+            duration: 1200
+        });
+
+        anime({
+            targets: '.nav-brand',
+            opacity: [0, 1],
+            translateX: [-20, 0],
+            easing: 'easeOutExpo',
+            duration: 1200
+        });
+
+        // Add prompt container animation
+        anime({
+            targets: '.prompt-container',
+            opacity: [0, 1],
+            translateY: [20, 0],
+            easing: 'easeOutExpo',
+            duration: 1200,
+            delay: 1100
+        });
+
+        // Add staggered animation for suggestions
+        anime({
+            targets: '.suggestion',
+            opacity: [0, 1],
+            translateY: [10, 0],
+            delay: anime.stagger(100, {start: 1300}),
+            easing: 'easeOutExpo',
+            duration: 800
+        });
+
+        // Add click handlers for suggestions and button loading state
+        document.querySelectorAll('.suggestion').forEach(suggestion => {
+            suggestion.addEventListener('click', () => {
+                const input = document.querySelector('.prompt-input');
+                input.value = suggestion.textContent.replace(/['"]/g, '');
+                input.focus();
+                
+                // Add ripple effect
+                const ripple = document.createElement('div');
+                ripple.style.position = 'absolute';
+                ripple.style.background = 'rgba(212, 175, 55, 0.3)';
+                ripple.style.borderRadius = '50%';
+                ripple.style.pointerEvents = 'none';
+                ripple.style.width = ripple.style.height = '100px';
+                ripple.style.transform = 'translate(-50%, -50%)';
+                ripple.style.left = event.offsetX + 'px';
+                ripple.style.top = event.offsetY + 'px';
+                
+                suggestion.appendChild(ripple);
+                
+                anime({
+                    targets: ripple,
+                    scale: [0, 3],
+                    opacity: [0.8, 0],
+                    duration: 1000,
+                    easing: 'easeOutExpo',
+                    complete: () => ripple.remove()
+                });
+            });
+        });
+
+        // Add button loading animation
+        const promptButton = document.querySelector('.prompt-button');
+        promptButton.addEventListener('click', () => {
+            promptButton.classList.add('loading');
+            // Simulate API call
+            setTimeout(() => {
+                promptButton.classList.remove('loading');
+            }, 2000);
+        });
+
+        // Animate testimonials section
+        const testimonialsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    anime({
+                        targets: '.section-title',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        easing: 'easeOutExpo',
+                        duration: 1200
+                    });
+
+                    anime({
+                        targets: '.testimonials-grid',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        easing: 'easeOutExpo',
+                        duration: 1200,
+                        delay: 300
+                    });
+
+                    anime({
+                        targets: '.testimonial-card',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        delay: anime.stagger(100, {start: 500}),
+                        easing: 'easeOutExpo',
+                        duration: 800
+                    });
+
+                    testimonialsObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        testimonialsObserver.observe(document.querySelector('.testimonials'));
+
+        // Add this to your existing script section
+        const featuresObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    anime({
+                        targets: '.features-title',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        easing: 'easeOutExpo',
+                        duration: 1200
+                    });
+
+                    anime({
+                        targets: '.features-grid',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        easing: 'easeOutExpo',
+                        duration: 1200,
+                        delay: 300
+                    });
+
+                    anime({
+                        targets: '.feature-card',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        delay: anime.stagger(100, {start: 500}),
+                        easing: 'easeOutExpo',
+                        duration: 800
+                    });
+
+                    featuresObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        featuresObserver.observe(document.querySelector('.features'));
+
+        // Add virtual try-on section animation
+        const tryOnObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    anime({
+                        targets: '.try-on-grid',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        easing: 'easeOutExpo',
+                        duration: 1200,
+                        delay: 300
+                    });
+
+                    tryOnObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        tryOnObserver.observe(document.querySelector('.try-on-results'));
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+        import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+
+        // Create loading indicator
+        const container = document.getElementById('avatar-canvas');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'avatar-loading';
+        container.appendChild(loadingDiv);
+
+        // Three.js setup
+        const scene = new THREE.Scene();
+        scene.background = null; // Make background transparent
+
+        const camera = new THREE.PerspectiveCamera(35, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 1.5, 3.5);
+        camera.lookAt(0, 1.5, 0);
+
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance"
+        });
+        
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setClearColor(0x000000, 0); // Set clear color to transparent
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const mainLight = new THREE.DirectionalLight(0xffffff, 2);
+        mainLight.position.set(5, 5, 5);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 1024;
+        mainLight.shadow.mapSize.height = 1024;
+        scene.add(mainLight);
+
+        const fillLight = new THREE.DirectionalLight(0xffffff, 1);
+        fillLight.position.set(-5, 3, -5);
+        scene.add(fillLight);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.screenSpacePanning = false;
+        controls.minDistance = 2.5;
+        controls.maxDistance = 6;
+        controls.maxPolarAngle = Math.PI / 1.8;
+        controls.target.set(0, 1.6, 0);
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle window resize
+        function onWindowResize() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        window.addEventListener('resize', onWindowResize);
+
+        // Load avatar model
+        const loader = new GLTFLoader();
+        let avatar;
+        
+        // Default fallback model URL - replace this with your preferred default avatar
+        const DEFAULT_AVATAR_URL = 'https://models.readyplayer.me/648bed9841ddf9e5c87a5868.glb';
+        
+        // Your custom avatar URL - replace this when you have a new avatar
+        const CUSTOM_AVATAR_URL = 'https://models.readyplayer.me/67b214f3f2e63fb3342360c3.glb';
+
+        function loadAvatar(url, isRetry = false) {
+            loadingDiv.innerHTML = `
+                <div class="avatar-loading-spinner"></div>
+                <div class="avatar-loading-text">Loading avatar...</div>
+            `;
+            
+            loader.load(
+                url,
+                function (gltf) {
+                    if (avatar) {
+                        scene.remove(avatar);
+                    }
+                    
+                    avatar = gltf.scene;
+                    
+                    // Enable shadows
+                    avatar.traverse((node) => {
+                        if (node.isMesh) {
+                            node.castShadow = true;
+                            node.receiveShadow = true;
+                        }
+                    });
+
+                    scene.add(avatar);
+                    
+                    // Center and scale the avatar
+                    const box = new THREE.Box3().setFromObject(avatar);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 1.6 / maxDim;
+                    avatar.scale.multiplyScalar(scale);
+                    
+                    // Adjust avatar position to be centered
+                    avatar.position.x = -center.x * scale;
+                    avatar.position.y = -center.y * scale + 1.5;
+                    avatar.position.z = -center.z * scale;
+
+                    // Ensure avatar is facing forward
+                    avatar.rotation.y = Math.PI; // Rotate 180 degrees to face camera
+
+                    // Remove loading indicator
+                    loadingDiv.remove();
+
+                    // Slower rotation animation
+                    function rotateAvatar() {
+                        if (avatar) {
+                            avatar.rotation.y += 0.003;
+                        }
+                        requestAnimationFrame(rotateAvatar);
+                    }
+                    rotateAvatar();
+                },
+                // Loading progress
+                function (xhr) {
+                    const percent = (xhr.loaded / xhr.total * 100).toFixed(0);
+                    loadingDiv.querySelector('.avatar-loading-text').textContent = 
+                        `Loading avatar... ${percent}%`;
+                },
+                // Error handling
+                function (error) {
+                    console.error('An error occurred loading the avatar:', error);
+                    
+                    if (!isRetry && url !== DEFAULT_AVATAR_URL) {
+                        // If primary avatar fails, try loading the default avatar
+                        console.log('Attempting to load fallback avatar...');
+                        loadAvatar(DEFAULT_AVATAR_URL, true);
+                    } else {
+                        // Both primary and fallback failed
+                        loadingDiv.innerHTML = `
+                            <div style="color: #ff4444;">
+                                Unable to load avatar. Please try:
+                                <br>1. Refreshing the page
+                                <br>2. Checking your internet connection
+                                <br>3. Generating a new avatar at ReadyPlayer.me
+                            </div>
+                        `;
+                    }
+                }
+            );
+        }
+
+        // Start loading the custom avatar first
+        loadAvatar(CUSTOM_AVATAR_URL);
+    </script>
+</body>
+</html> 
